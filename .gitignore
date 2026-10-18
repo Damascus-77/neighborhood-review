@@ -1,0 +1,16 @@
+target/
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.log
+logs/
+uploads/
+.env
+.env.*
+!.env.example
+application-local.*
+*.jtl
+*.hprof
+*.zip
