@@ -11,8 +11,8 @@
     <groupId>com.zwh.neighborhood</groupId>
     <artifactId>neighborhood-review</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>neighborhood-review</name>
-    <description>Neighborhood Review learning backend</description>
+    <name>LocalLife Lab</name>
+    <description>Local life backend and concurrency experiments</description>
     <properties>
         <java.version>1.8</java.version>
     </properties>

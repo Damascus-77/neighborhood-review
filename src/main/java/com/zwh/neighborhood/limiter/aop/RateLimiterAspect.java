@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.UUID;
 
 /**
      【滑动窗口限流】-2
@@ -77,7 +78,7 @@ public class RateLimiterAspect {
         return stringRedisTemplate.execute(
                 SLIDING_WINDOW_SCRIPT,
                 Collections.singletonList(key),
-                window.toString(), limit.toString(), Long.toString(now)
+                window.toString(), limit.toString(), Long.toString(now), UUID.randomUUID().toString()
         );
     }
 

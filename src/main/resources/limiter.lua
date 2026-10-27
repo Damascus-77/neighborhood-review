@@ -10,7 +10,7 @@
         1. 删除超出时间窗口的数据 redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
         2. 获取当前时间窗口内的已请求数量 redis.call('ZCARD', key)
         3. 判断当前时间窗口内的已请求数量 是否 小于 limit 限制次数
-            a. 若小于，则把本次请求加入key中，以当前时间戳为分数score，以当前时间戳+随机数为成员member，更新过期时间，本次请求可放行，后续可执行业务逻辑
+            a. 若小于，则把本次请求加入key中，以当前时间戳为score，以调用方生成的请求UUID为member，更新过期时间
             b. 若大于或等于，则返回本次请求应该限流
 ]]
 
@@ -18,9 +18,13 @@ local key = KEYS[1]
 local window = tonumber(ARGV[1]) -- 时间窗口(单位为秒)
 local limit = tonumber(ARGV[2]) -- 时间窗口内限制的次数
 local now = tonumber(ARGV[3])  -- 当前时间(单位为毫秒)
+local member = ARGV[4] -- RateLimiterAspect为每次调用生成独立UUID
 
 -- 校验传进来的参数是否为空,若为空直接返回错误
-if not window or not limit or not now then
+if not window or not limit or not now or not member or member == ''
+    or window <= 0 or window ~= math.floor(window)
+    or limit <= 0 or limit ~= math.floor(limit)
+    or now < 0 or now ~= math.floor(now) then
   return redis.error_reply("Invalid input parameters")
 end
 
@@ -29,7 +33,7 @@ window = window * 1000  -- 单位由秒->毫秒
 -- 删除超出时间窗口的数据
 -- Redis命令ZREMRANGEBYSCORE: 从有序集合中移除指定分数区间的成员。 删除所有分数在 [0,now-window) 的请求记录
 -- now是当前时间戳,window是时间窗口, 0是最小分数,now-window是时间窗口外最大的分数,这样就能删除超出窗口的元素
-redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+redis.call('ZREMRANGEBYSCORE', key, '-inf', now - window)
 
 -- 获取当前窗口内的请求数量
 -- Redis命令ZCARD: 返回有序集合中成员的数量,因为已经删除了超出时间窗口的元素，所以直接返回集合的成员数量即可获取当前时间窗口的请求数量
@@ -37,12 +41,10 @@ local current = redis.call('ZCARD', key)
 
 -- 若"当前时间窗口内的请求数量" 小于 "时间窗口内限制的次数"
 if current < limit then
-  -- 添加当前请求（使用毫秒时间戳+随机数作为member,时间戳作为score）
-  math.randomseed(now)
-  local random = math.random(1000000)
-  redis.call('ZADD', key, now, now .. '-' .. random)
+  -- 同一毫秒内的请求也必须分别计数，不能反复用时间戳重置随机种子。
+  redis.call('ZADD', key, now, member)
   -- 更新过期时间
-  redis.call('EXPIRE', key, window / 1000)
+  redis.call('PEXPIRE', key, window)
   return current + 1
 else
   -- 若"当前时间窗口内的请求数量" 大于等于 "时间窗口内限制的次数", 则应该限制本次请求,返回 0,表示限流

@@ -1,4 +1,6 @@
 target/
+.local/
+__pycache__/
 .idea/
 .vscode/
 *.iml

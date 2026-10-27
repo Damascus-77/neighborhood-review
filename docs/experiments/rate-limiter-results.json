@@ -1,0 +1,53 @@
+{
+  "platform": "Windows",
+  "redis_version": "3.2.100",
+  "scope": "Redis script correctness, not HTTP throughput or application integration",
+  "results": [
+    {
+      "test": "legacy_same_millisecond_defect",
+      "passed": true,
+      "requests": 200,
+      "limit": 10,
+      "accepted": 200,
+      "records": 1
+    },
+    {
+      "test": "fixed_same_millisecond",
+      "passed": true,
+      "requests": 200,
+      "limit": 10,
+      "accepted": 10
+    },
+    {
+      "test": "concurrent_same_millisecond",
+      "passed": true,
+      "requests": 200,
+      "workers": 20,
+      "limit": 25,
+      "accepted": 25
+    },
+    {
+      "test": "window_boundary",
+      "passed": true,
+      "responses": [
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "test": "independent_keys",
+      "passed": true
+    },
+    {
+      "test": "key_expiry",
+      "passed": true,
+      "ttl_ms": 59974
+    },
+    {
+      "test": "invalid_arguments",
+      "passed": true,
+      "rejected": 5
+    }
+  ]
+}
